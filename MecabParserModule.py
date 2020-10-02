@@ -1,7 +1,11 @@
+#!/usr/bin/env python
+# coding: utf-8
+
 import MeCab
 import pandas as pd
 import numpy as np
 import re
+import os
 
 class MecabParser:
 
@@ -25,29 +29,22 @@ class MecabParser:
         return self.raw_table
     
     
-    def clean_parser(self):
-        #CREATE NEW TABLE
-        new_sorted_data = self.raw_table[[0, 1, 3]].copy() #Only take Columns 0, 1, and 3
+    def clean_parser(self, kanji_only=True, remove_pos = ["助詞", "記号"]):
+        #CREATE NEW TABLE #Only take Columns 0, 1, and 3 and name them.
+        new_sorted_data = self.raw_table[[0, 1, 3]].copy()
         new_sorted_data.columns = ["単語", "フリガナ", "品詞"]
         
-        #Remove Common Words Such as Fucntional Words
-        functional_word_index = []
-        row_count = new_sorted_data.shape[0]
-        for i in np.arange(row_count):
-            pos_str =str(new_sorted_data.loc[i, "品詞"])
-            word_str = str(new_sorted_data.loc[i, "単語"])
-            re_kanji = re.compile(r'^[\u4E00-\u9FD0]+$')
-            status_kanji = re_kanji.fullmatch(word_str)
-            if pos_str[:3] in ["助詞", "記号"] or                 status_kanji == None:
-                functional_word_index.append(i)        
-                
-        word_table = new_sorted_data.drop(functional_word_index)
+        #Remove unwanted POS
+        remove_pos = "|".join(remove_pos)
+        pos_filter = new_sorted_data["品詞"].str.contains(remove_pos)
+        pos_filter = ~pos_filter.fillna(False)
+        word_table = new_sorted_data[pos_filter]
         
         #Sort and Drop Duplicates
         word_table = word_table.sort_values(by = "単語")
         word_table = word_table.drop_duplicates() #DataFrame.drop_duplicates(self, subset=None, keep='first', inplace=False)[source]
         word_table.index = np.arange(word_table.shape[0])
-        word_table.style.set_properties(**{'text-align': 'right'})
+        word_table.style.set_properties(**{'text-align': 'left'})
         self.word_table = word_table
         
         return self.word_table
