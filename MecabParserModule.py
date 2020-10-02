@@ -1,9 +1,3 @@
-#!/usr/bin/env python
-# coding: utf-8
-
-# In[106]:
-
-
 import MeCab
 import pandas as pd
 import numpy as np
@@ -14,21 +8,20 @@ class MecabParser:
     def __init__(self, file_in):
         self.file_in = file_in
         self.file_out = self.file_in + ".mecab"
-        
+
     def initial_parser(self):
         file_in = self.file_in
         file_out = self.file_out
         tagger = MeCab.Tagger("-Ochasen")
-        
+
         with open(file_in, encoding="utf-8") as input_file:
             with open(file_out, mode="w", encoding="utf-8") as output_file:
                 parsed_result = tagger.parse(input_file.read())
                 output_file.write(parsed_result)
 
-        #CREATE RAW TABLE
-        raw_table = pd.read_table(file_out)
-        raw_table.columns = range(0, raw_table.shape[1]) #Name column headers other the first word row becomes the column headers
-        self.raw_table = raw_table
+        self.raw_table = pd.read_table(file_out, header=None)
+        os.remove(file_out)
+
         return self.raw_table
     
     
