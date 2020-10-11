@@ -1,11 +1,12 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-import MeCab
-import pandas as pd
-import numpy as np
-import re
+import sys
 import os
+import re
+import numpy as np
+import pandas as pd
+import MeCab
 
 class MecabParser:
 
@@ -27,7 +28,9 @@ class MecabParser:
 
     def initial_parse(self):
 
+        #Save initial parsed results to csv
         self.raw_table.to_csv(os.path.join(self.file_dir, self.file_name+"_initial.csv"))
+
         return self.raw_table
 
 
@@ -65,7 +68,9 @@ class MecabParser:
         word_table.style.set_properties(**{'text-align': 'right'})
         self.word_table = word_table
 
+        #Save clean parsed results to csv
         self.word_table.to_csv(os.path.join(self.file_dir, self.file_name + "_clean.csv"))
+
         return self.word_table
     
     def hiragana_parser(self):
@@ -106,5 +111,8 @@ class MecabParser:
                 new_word += char
 
         return new_word
-    
 
+if __name__ == "__main__":
+    input_file = sys.argv[1]
+    parser = MecabParser(input_file)
+    print(parser.clean_parse())
