@@ -1,11 +1,12 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-import MeCab
-import pandas as pd
-import numpy as np
-import re
+import sys
 import os
+import re
+import numpy as np
+import pandas as pd
+import MeCab
 
 class MecabParser:
 
@@ -13,25 +14,30 @@ class MecabParser:
         self.file_in = file_in
         self.file_out = self.file_in + ".mecab"
 
-    def initial_parser(self):
-        file_in = self.file_in
-        file_out = self.file_out
-        tagger = MeCab.Tagger("-Ochasen")
+        with open(self.file_in, encoding="utf-8") as input_file:
+            with open(self.file_out, mode="w", encoding="utf-8") as output_file:
+                initial_parsed = MeCab.Tagger("-Ochasen").parse(input_file.read())
+                output_file.write(initial_parsed)
 
-        with open(file_in, encoding="utf-8") as input_file:
-            with open(file_out, mode="w", encoding="utf-8") as output_file:
-                parsed_result = tagger.parse(input_file.read())
-                output_file.write(parsed_result)
+        self.raw_table = pd.read_table(self.file_out, header=None)
+        os.remove(self.file_out)
 
-        self.raw_table = pd.read_table(file_out, header=None)
-        os.remove(file_out)
+        self.file_dir, self.file_name_with_extension = os.path.split(file_in)
+        self.file_name, self.extension = os.path.splitext(self.file_name_with_extension)
+
+
+    def initial_parse(self):
+
+        #Save initial parsed results to csv
+        self.raw_table.to_csv(os.path.join(self.file_dir, self.file_name+"_initial.csv"))
 
         return self.raw_table
-    
-    
-    def clean_parser(self, kanji_only=True, remove_pos = ["助詞", "記号"]):
-        #CREATE NEW TABLE #Only take Columns 0, 1, and 3 and name them.
-        new_sorted_data = self.raw_table[[0, 1, 3]].copy()
+
+
+    def clean_parse(self, kanji="only", remove_pos = ["助詞", "記号"], sort_by=["単語", "フリガナ", "品詞"]):
+
+        #Take Columns 0, 1, and 3, which are the words, pronunciations, and POS respectively.
+        new_sorted_data = self.raw_table[[0, 1, 3]].drop_duplicates()
         new_sorted_data.columns = ["単語", "フリガナ", "品詞"]
         
         #Remove unwanted POS
@@ -39,14 +45,32 @@ class MecabParser:
         pos_filter = new_sorted_data["品詞"].str.contains(remove_pos)
         pos_filter = ~pos_filter.fillna(False)
         word_table = new_sorted_data[pos_filter]
+
+        #Remove non-kanji words
+        if kanji == "only":
+            kanji_pattern = re.compile(r'^[\u4E00-\u9FD0]+$')
+            kanji_filter = word_table["単語"].str.contains(kanji_pattern, regex=True)
+
+        elif kanji == "mixed":
+            kanji_pattern = re.compile(r'[\u4E00-\u9FD0]')
+            kanji_filter = word_table["単語"].apply(lambda x : kanji_pattern.search(x) != None)
+
+        elif kanji == "none":
+            kanji_pattern = re.compile(r'[\u4E00-\u9FD0]')
+            kanji_filter = word_table["単語"].apply(lambda x : kanji_pattern.search(x) == None)
+
+        word_table = word_table[kanji_filter]
+
         
         #Sort and Drop Duplicates
-        word_table = word_table.sort_values(by = "単語")
-        word_table = word_table.drop_duplicates() #DataFrame.drop_duplicates(self, subset=None, keep='first', inplace=False)[source]
+        word_table = word_table.sort_values(by=sort_by)
         word_table.index = np.arange(word_table.shape[0])
-        word_table.style.set_properties(**{'text-align': 'left'})
+        word_table.style.set_properties(**{'text-align': 'right'})
         self.word_table = word_table
-        
+
+        #Save clean parsed results to csv
+        self.word_table.to_csv(os.path.join(self.file_dir, self.file_name + "_clean.csv"))
+
         return self.word_table
     
     def hiragana_parser(self):
@@ -87,5 +111,8 @@ class MecabParser:
                 new_word += char
 
         return new_word
-    
 
+if __name__ == "__main__":
+    input_file = sys.argv[1]
+    parser = MecabParser(input_file)
+    print(parser.clean_parse())
