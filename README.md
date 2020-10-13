@@ -8,3 +8,9 @@ https://taku910.github.io/mecab/#parse
 
 
 MeCabを利用して、日本語文章の単語を抽出し、フリガナを付けてからCSVとして出力スクリプトです。
+
+
+### Installation/実装について
+#### pip install mecab-python3 pandas
+OR
+#### pip install -r requirements.txt
