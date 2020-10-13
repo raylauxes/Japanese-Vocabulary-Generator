@@ -46,7 +46,7 @@ class MecabParser:
     def initial_parse(self):
 
         #Save initial parsed results to csv
-        self.raw_table.to_csv(os.path.join(self.file_dir, self.file_name+"_initial.csv"))
+        self.raw_table.to_csv(os.path.join(self.file_dir, self.file_name+"_initial.csv"), encoding="utf-8-sig")
 
         return self.raw_table
 
@@ -96,12 +96,12 @@ class MecabParser:
         self.word_table = word_table
 
         #Save clean parsed results to csv
-        self.word_table.to_csv(os.path.join(self.file_dir, self.file_name + "_clean.csv"))
+        self.word_table.to_csv(os.path.join(self.file_dir, self.file_name + "_clean.csv"), encoding="utf-8-sig")
 
         return self.word_table
 
-    
-
+# Output clean parsed results of a file in command line
+# Command: python path/to/MecabParserModule.py path/to/file
 if __name__ == "__main__":
     input_file = sys.argv[1]
     parser = MecabParser(input_file)
