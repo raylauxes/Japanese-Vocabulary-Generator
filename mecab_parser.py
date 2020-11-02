@@ -14,8 +14,7 @@ class MecabParser:
         self.file_in = file_in
         self.file_out = self.file_in + ".mecab"
 
-        # tagger = MeCab.Tagger("-Ochasen")
-        tagger = MeCab.Tagger()
+        tagger = MeCab.Tagger("-Ochasen")
         with open(self.file_in, encoding="utf-8") as input_file:
             with open(self.file_out, mode="w", encoding="utf-8") as output_file:
                 initial_parsed = tagger.parse(input_file.read())
@@ -61,7 +60,7 @@ class MecabParser:
         """
 
         #Take Columns that show words, pronunciations, and POS respectively.
-        new_sorted_data = self.raw_table[[0, 2, 4]].drop_duplicates()
+        new_sorted_data = self.raw_table[[0, 1, 3]].drop_duplicates()
         new_sorted_data.columns = ["単語", "振り仮名", "品詞"]
 
         #Convert katakana to hiragana
